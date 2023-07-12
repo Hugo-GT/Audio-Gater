@@ -30,3 +30,14 @@
 *.exe
 *.out
 *.app
+
+# Juce files
+/.vscode/
+/Builds/
+/GeneratedCode/
+/JuceLibraryCode/
+/.juce/
+/.DS_Store
+
+# Visual Studio
+/.vs
