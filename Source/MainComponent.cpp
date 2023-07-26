@@ -50,6 +50,11 @@ void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer
 	auto maxInputChannels = activeInputChannels.getHighestBit() + 1;
 	auto maxOutputChannels = activeOutputChannels.getHighestBit() + 1;
 
+	//juce::dsp::ProcessSpec processSpec;
+
+	juce::dsp::BallisticsFilter<float> ballisticFilter;
+	ballisticFilter.prepare(); //Il faut setupper le processBloc en suivant avec f12 on peut voir ce qu'il faut y mettre
+
 	for (auto channel = 0; channel < maxOutputChannels; ++channel)
 	{
 		if ((!activeOutputChannels[channel]) || maxInputChannels == 0)
@@ -77,9 +82,9 @@ void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer
 
 					outBuffer[sample] = inBuffer[sample] * 10.0f;
 
-					float test = outBuffer[sample];
-
-					if (outBuffer[sample] >= 0.2f || outBuffer[sample] <= -0.2f)
+					float filtered = ballisticFilter.processSample(0, outBuffer[sample]);
+					float rectified = std::abs(filtered);
+					if (rectified >= 0.2f)
 					{
 						transportSource.setGain(0.0f);
 						sampleCounter = 30000;
