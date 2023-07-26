@@ -34,6 +34,8 @@ private:
 		Stopping
 	};
 
+	int sampleCounter = 0;
+
 	void changeListenerCallback(juce::ChangeBroadcaster* source) override;
 	double getSongLengthInSeconds();
 	double getCurrentPositionInSeconds();

@@ -3,10 +3,6 @@
 //==============================================================================
 MainComponent::MainComponent() : state(Stopped)
 {
-	//addAndMakeVisible(&testBtn);
-	//testBtn.setButtonText("Test");
-	//testBtn.onClick = [this]() { transportSlider.setValue(20.0); };
-
 	// Make sure you set the size of the component after
 	// you add any child components.
 	addAndMakeVisible(&openBtn);
@@ -32,7 +28,6 @@ MainComponent::MainComponent() : state(Stopped)
 	transportSource.addChangeListener(this);   // [2]
 
 	setAudioChannels(2, 2);
-
 }
 
 MainComponent::~MainComponent()
@@ -49,6 +44,55 @@ void MainComponent::prepareToPlay(int samplesPerBlockExpected, double sampleRate
 
 void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill)
 {
+	auto* device = deviceManager.getCurrentAudioDevice();
+	auto activeInputChannels = device->getActiveInputChannels();
+	auto activeOutputChannels = device->getActiveOutputChannels();
+	auto maxInputChannels = activeInputChannels.getHighestBit() + 1;
+	auto maxOutputChannels = activeOutputChannels.getHighestBit() + 1;
+
+	for (auto channel = 0; channel < maxOutputChannels; ++channel)
+	{
+		if ((!activeOutputChannels[channel]) || maxInputChannels == 0)
+		{
+			bufferToFill.buffer->clear(channel, bufferToFill.startSample, bufferToFill.numSamples);
+		}
+		else
+		{
+			auto actualInputChannel = channel % maxInputChannels; // [1]
+
+			if (!activeInputChannels[channel]) // [2]
+			{
+				bufferToFill.buffer->clear(channel, bufferToFill.startSample, bufferToFill.numSamples);
+			}
+			else // [3]
+			{
+				auto* inBuffer = bufferToFill.buffer->getReadPointer(actualInputChannel,
+					bufferToFill.startSample);
+				auto* outBuffer = bufferToFill.buffer->getWritePointer(channel, bufferToFill.startSample);
+
+				for (auto sample = 0; sample < bufferToFill.numSamples; ++sample)
+				{
+					if (sampleCounter > 0)
+						sampleCounter--;
+
+					outBuffer[sample] = inBuffer[sample] * 10.0f;
+
+					float test = outBuffer[sample];
+
+					if (outBuffer[sample] >= 0.2f || outBuffer[sample] <= -0.2f)
+					{
+						transportSource.setGain(0.0f);
+						sampleCounter = 30000;
+					}
+				}
+			}
+		}
+	}
+
+
+	if (sampleCounter == 0)
+		transportSource.setGain(1.0f);
+
 	if (readerSource.get() == nullptr)
 	{
 		bufferToFill.clearActiveBufferRegion();
