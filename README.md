@@ -1,4 +1,4 @@
-# Audio-Gater
+# AudioGater
 
 This project serves as a learning ground for C++, Digital Signal Processing (DSP), and the JUCE framework. The foundation of the project is based on a JUCE tutorial about audio players, which you can find [here](https://docs.juce.com/master/tutorial_playing_sound_files.html).
 
@@ -44,7 +44,7 @@ The project is an audio application designed to playback selected audio tracks. 
 
 ## How to Use
 
-1. **Open the Project in Projucer:** Launch JUCE Projucer and navigate to the directory containing the Audio-Gater project. Open the project by selecting the appropriate `.jucer` file (e.g., `AudioGaterProject.jucer`).
+1. **Open the Project in Projucer:** Launch JUCE Projucer and navigate to the directory containing the AudioGater project. Open the project by selecting the appropriate `.jucer` file (e.g., `AudioGater.jucer`).
 
 2. **Open Solution in Your IDE:** Inside Projucer, go to the "File" menu and choose "Open in IDE." This action generates the necessary project files for your development environment and opens the solution in your chosen C++ IDE.
 

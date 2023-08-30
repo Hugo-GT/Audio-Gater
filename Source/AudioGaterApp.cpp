@@ -1,7 +1,7 @@
-#include "MainComponent.h"
+#include "AudioGaterApp.h"
 
 //==============================================================================
-MainComponent::MainComponent() : state(Stopped)
+AudioGaterApp::AudioGaterApp() : state(Stopped)
 {
 	// Make sure you set the size of the component after
 	// you add any child components.
@@ -22,7 +22,7 @@ MainComponent::MainComponent() : state(Stopped)
 	stopBtn.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
 	stopBtn.setEnabled(false);
 
-	setSize(300, 200);
+	setSize(960, 540);
 
 	formatManager.registerBasicFormats();       // [1]
 	transportSource.addChangeListener(this);   // [2]
@@ -30,19 +30,19 @@ MainComponent::MainComponent() : state(Stopped)
 	setAudioChannels(2, 2);
 }
 
-MainComponent::~MainComponent()
+AudioGaterApp::~AudioGaterApp()
 {
 	// This shuts down the audio device and clears the audio source.
 	shutdownAudio();
 }
 
 //==============================================================================
-void MainComponent::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
+void AudioGaterApp::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
 	transportSource.prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
-void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill)
+void AudioGaterApp::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill)
 {
 	auto* device = deviceManager.getCurrentAudioDevice();
 	auto activeInputChannels = device->getActiveInputChannels();
@@ -101,7 +101,7 @@ void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer
 	transportSource.getNextAudioBlock(bufferToFill);
 }
 
-void MainComponent::releaseResources()
+void AudioGaterApp::releaseResources()
 {
 	// This will be called when the audio device stops, or when it is being
 	// restarted due to a setting change.
@@ -111,7 +111,7 @@ void MainComponent::releaseResources()
 }
 
 //==============================================================================
-void MainComponent::paint(juce::Graphics& g)
+void AudioGaterApp::paint(juce::Graphics& g)
 {
 	// (Our component is opaque, so we must completely fill the background with a solid colour)
 	g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
@@ -119,7 +119,7 @@ void MainComponent::paint(juce::Graphics& g)
 	// You can add your drawing code here!
 }
 
-void MainComponent::resized()
+void AudioGaterApp::resized()
 {
 	// This is called when the MainContentComponent is resized.
 	// If you add any child components, this is where you should
@@ -160,7 +160,7 @@ void MainComponent::resized()
 	grid.performLayout(getLocalBounds().reduced(vSpacing));
 }
 
-void MainComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
+void AudioGaterApp::changeListenerCallback(juce::ChangeBroadcaster* source)
 {
 	if (source == &transportSource)
 	{
@@ -171,17 +171,17 @@ void MainComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
 	}
 }
 
-double MainComponent::getSongLengthInSeconds()
+double AudioGaterApp::getSongLengthInSeconds()
 {
 	return readerSource != nullptr ? readerSource->getAudioFormatReader()->lengthInSamples / readerSource->getAudioFormatReader()->sampleRate : 0.0;
 }
 
-double MainComponent::getCurrentPositionInSeconds()
+double AudioGaterApp::getCurrentPositionInSeconds()
 {
 	return transportSource.isPlaying() ? transportSource.getCurrentPosition() : 0.0;
 }
 
-juce::String MainComponent::formatTime(int seconds)
+juce::String AudioGaterApp::formatTime(int seconds)
 {
 	int minutes = seconds / 60;
 	int remainingSeconds = seconds % 60;
@@ -192,7 +192,7 @@ juce::String MainComponent::formatTime(int seconds)
 	return formattedTime;
 }
 
-void MainComponent::openBtnClicked()
+void AudioGaterApp::openBtnClicked()
 {
 	chooser = std::make_unique<juce::FileChooser>("Select a Wave file to play...",
 		juce::File{},
@@ -219,17 +219,17 @@ void MainComponent::openBtnClicked()
 		});
 }
 
-void MainComponent::playBtnClicked()
+void AudioGaterApp::playBtnClicked()
 {
 	changeState(Starting);
 }
 
-void MainComponent::stopBtnClicked()
+void AudioGaterApp::stopBtnClicked()
 {
 	changeState(Stopping);
 }
 
-void MainComponent::changeState(TransportState newState)
+void AudioGaterApp::changeState(TransportState newState)
 {
 	if (state != newState)
 	{
