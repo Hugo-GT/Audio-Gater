@@ -7,14 +7,14 @@
 */
 
 #include <JuceHeader.h>
-#include "MainComponent.h"
+#include "AudioGaterApp.h"
 
 //==============================================================================
-class AudioPlayerNewVersionApplication : public juce::JUCEApplication
+class AudioGaterAppApplication : public juce::JUCEApplication
 {
 public:
 	//==============================================================================
-	AudioPlayerNewVersionApplication() {}
+	AudioGaterAppApplication() {}
 
 	const juce::String getApplicationName() override { return ProjectInfo::projectName; }
 	const juce::String getApplicationVersion() override { return ProjectInfo::versionString; }
@@ -53,7 +53,7 @@ public:
 	//==============================================================================
 	/*
 		This class implements the desktop window that contains an instance of
-		our MainComponent class.
+		our AudioGaterApp class.
 	*/
 	class MainWindow : public juce::DocumentWindow
 	{
@@ -65,12 +65,13 @@ public:
 				DocumentWindow::allButtons)
 		{
 			setUsingNativeTitleBar(true);
-			setContentOwned(new MainComponent(), true);
+			setContentOwned(new AudioGaterApp(), true);
 
 #if JUCE_IOS || JUCE_ANDROID
 			setFullScreen(true);
 #else
-			setResizable(true, true);
+			setTitleBarButtonsRequired(TitleBarButtons::closeButton | TitleBarButtons::minimiseButton, false);
+			setResizable(false, false);
 			centreWithSize(getWidth(), getHeight());
 #endif
 
@@ -102,4 +103,4 @@ private:
 
 //==============================================================================
 // This macro generates the main() routine that launches the app.
-START_JUCE_APPLICATION(AudioPlayerNewVersionApplication)
+START_JUCE_APPLICATION(AudioGaterAppApplication)
