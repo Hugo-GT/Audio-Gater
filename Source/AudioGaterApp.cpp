@@ -3,36 +3,58 @@
 //==============================================================================
 AudioGaterApp::AudioGaterApp() : state(Stopped)
 {
-	// Make sure you set the size of the component after
-	// you add any child components.
 	addAndMakeVisible(&openBtn);
 	openBtn.setButtonText("Open...");
-	openBtn.onClick = [this]() { openBtnClicked(); };
+	openBtn.onClick = [this]()
+		{ openBtnClicked(); };
 	openBtn.setColour(juce::TextButton::buttonColourId, juce::Colours::blueviolet);
 
 	addAndMakeVisible(&playBtn);
 	playBtn.setButtonText("Play");
-	playBtn.onClick = [this]() { playBtnClicked(); };
+	playBtn.onClick = [this]()
+		{ playBtnClicked(); };
 	playBtn.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
 	playBtn.setEnabled(false);
 
 	addAndMakeVisible(&stopBtn);
 	stopBtn.setButtonText("Stop");
-	stopBtn.onClick = [this]() { stopBtnClicked(); };
+	stopBtn.onClick = [this]()
+		{ stopBtnClicked(); };
 	stopBtn.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
 	stopBtn.setEnabled(false);
 
+	addAndMakeVisible(&muteBtn);
+	muteBtn.setButtonText("Mute");
+	muteBtn.onClick = [this]()
+		{ muteBtnClicked(); };
+	muteBtn.setColour(juce::TextButton::buttonColourId, juce::Colours::dimgrey);
+	muteBtn.setEnabled(true);
+
+	addAndMakeVisible(&unmuteBtn);
+	unmuteBtn.setAlpha(0.0f);
+	unmuteBtn.onClick = [this]()
+		{unmuteBtnClicked(); };
+	unmuteBtn.setEnabled(true);
+	unmuteBtn.setVisible(false);
+	unmuteBtn.setAlwaysOnTop(true);
+
+	addAndMakeVisible(&muteText);
+	muteText.setFont(juce::Font(190.0f, juce::Font::bold));
+	muteText.setColour(juce::Label::textColourId, juce::Colours::black);
+	muteText.setText("AUDIO MUTED", juce::dontSendNotification);
+	muteText.setJustificationType(juce::Justification::centred);
+	muteText.setVisible(false);
+
 	setSize(960, 540);
 
-	formatManager.registerBasicFormats();       // [1]
-	transportSource.addChangeListener(this);   // [2]
+	formatManager.registerBasicFormats();
+	transportSource.addChangeListener(this);
 
 	setAudioChannels(2, 2);
 }
 
 AudioGaterApp::~AudioGaterApp()
 {
-	// This shuts down the audio device and clears the audio source.
 	shutdownAudio();
 }
 
@@ -58,13 +80,13 @@ void AudioGaterApp::getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer
 		}
 		else
 		{
-			auto actualInputChannel = channel % maxInputChannels; // [1]
+			auto actualInputChannel = channel % maxInputChannels;
 
-			if (!activeInputChannels[channel]) // [2]
+			if (!activeInputChannels[channel] || audioIsMuted)
 			{
 				bufferToFill.buffer->clear(channel, bufferToFill.startSample, bufferToFill.numSamples);
 			}
-			else // [3]
+			else
 			{
 				auto* inBuffer = bufferToFill.buffer->getReadPointer(actualInputChannel,
 					bufferToFill.startSample);
@@ -77,11 +99,8 @@ void AudioGaterApp::getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer
 
 					outBuffer[sample] = inBuffer[sample] * 10.0f;
 
-					float test = outBuffer[sample];
-
 					if (outBuffer[sample] >= 0.2f || outBuffer[sample] <= -0.2f)
 					{
-						transportSource.setGain(0.0f);
 						sampleCounter = 30000;
 					}
 				}
@@ -89,42 +108,30 @@ void AudioGaterApp::getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer
 		}
 	}
 
-
-	if (sampleCounter == 0)
-		transportSource.setGain(1.0f);
-
-	if (readerSource.get() == nullptr)
+	if (sampleCounter == 0 && !audioIsMuted)
 	{
-		bufferToFill.clearActiveBufferRegion();
-		return;
+		transportSource.getNextAudioBlock(bufferToFill);
 	}
-	transportSource.getNextAudioBlock(bufferToFill);
+	else
+
+	{
+		transportSource.setPosition(transportSource.getCurrentPosition() + (bufferToFill.numSamples / device->getCurrentSampleRate()));
+	}
 }
 
 void AudioGaterApp::releaseResources()
 {
-	// This will be called when the audio device stops, or when it is being
-	// restarted due to a setting change.
-	// For more details, see the help for AudioProcessor::releaseResources()
-
 	transportSource.releaseResources();
 }
 
 //==============================================================================
 void AudioGaterApp::paint(juce::Graphics& g)
 {
-	// (Our component is opaque, so we must completely fill the background with a solid colour)
 	g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
-
-	// You can add your drawing code here!
 }
 
 void AudioGaterApp::resized()
 {
-	// This is called when the MainContentComponent is resized.
-	// If you add any child components, this is where you should
-	// update their positions.
-
 	int vSpacing = getHeight() * 0.04;
 	int hSpacing = getWidth() * 0.04;
 
@@ -140,24 +147,37 @@ void AudioGaterApp::resized()
 		Track(Fr(1)),
 		Track(Fr(1)),
 		Track(Fr(1)),
-		Track(Fr(1))
-	};
+		Track(Fr(1)) };
 	grid.templateColumns = {
 		Track(Fr(1)),
 		Track(Fr(1)),
-		Track(Fr(1))
-	};
+		Track(Fr(1)) };
 
 	grid.columnGap.pixels = hSpacing;
 	grid.rowGap.pixels = vSpacing;
 
 	grid.items = {
-		juce::GridItem(openBtn).withArea(3,2),
-		juce::GridItem(playBtn).withArea(4,2),
-		juce::GridItem(stopBtn).withArea(5,2),
+		juce::GridItem(openBtn).withArea(3, 2),
+		juce::GridItem(playBtn).withArea(4, 2),
+		juce::GridItem(stopBtn).withArea(5, 2),
+		juce::GridItem(muteBtn).withArea(6, 2)
 	};
 
 	grid.performLayout(getLocalBounds().reduced(vSpacing));
+
+	muteText.setBounds(0, 0, getWidth(), getHeight());
+	unmuteBtn.setBounds(0, 0, getWidth(), getHeight());
+}
+
+void AudioGaterApp::timerCallback()
+{
+	if (!muteMessageIsOn && audioIsMuted)
+		muteText.setVisible(true);
+	else
+		muteText.setVisible(false);
+
+	muteMessageIsOn = !muteMessageIsOn;
+	startTimer(500);
 }
 
 void AudioGaterApp::changeListenerCallback(juce::ChangeBroadcaster* source)
@@ -196,27 +216,26 @@ void AudioGaterApp::openBtnClicked()
 {
 	chooser = std::make_unique<juce::FileChooser>("Select a Wave file to play...",
 		juce::File{},
-		"*.wav, *.mp3");                     // [7]
+		"*.wav, *.mp3");
 
 	auto chooserFlags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles;
 
-	chooser->launchAsync(chooserFlags, [this](const juce::FileChooser& fc)     // [8]
+	chooser->launchAsync(chooserFlags, [this](const juce::FileChooser& fc)
 		{
 			juce::File file = fc.getResult();
 
-			if (file != juce::File{})                                                // [9]
+			if (file != juce::File{})
 			{
 				auto* reader = formatManager.createReaderFor(file);
 
 				if (reader != nullptr)
 				{
-					auto newSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);   // [11]
-					transportSource.setSource(newSource.get(), 0, nullptr, reader->sampleRate);       // [12]
-					playBtn.setEnabled(true);                                                      // [13]
-					readerSource.reset(newSource.release());                                          // [14]
+					auto newSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
+					transportSource.setSource(newSource.get(), 0, nullptr, reader->sampleRate);
+					playBtn.setEnabled(true);
+					readerSource.reset(newSource.release());
 				}
-			}
-		});
+			} });
 }
 
 void AudioGaterApp::playBtnClicked()
@@ -229,6 +248,22 @@ void AudioGaterApp::stopBtnClicked()
 	changeState(Stopping);
 }
 
+void AudioGaterApp::muteBtnClicked()
+{
+	audioIsMuted = true;
+	unmuteBtn.setVisible(true);
+	muteText.setVisible(true);
+	startTimer(500);
+}
+
+void AudioGaterApp::unmuteBtnClicked()
+{
+	audioIsMuted = false;
+	unmuteBtn.setVisible(false);
+	muteText.setVisible(false);
+	stopTimer();
+}
+
 void AudioGaterApp::changeState(TransportState newState)
 {
 	if (state != newState)
@@ -237,22 +272,22 @@ void AudioGaterApp::changeState(TransportState newState)
 
 		switch (state)
 		{
-		case Stopped:                           // [3]
+		case Stopped:
 			stopBtn.setEnabled(false);
 			playBtn.setEnabled(true);
 			transportSource.setPosition(0.0);
 			break;
 
-		case Starting:                          // [4]
+		case Starting:
 			playBtn.setEnabled(false);
 			transportSource.start();
 			break;
 
-		case Playing:                           // [5]
+		case Playing:
 			stopBtn.setEnabled(true);
 			break;
 
-		case Stopping:                          // [6]
+		case Stopping:
 			transportSource.stop();
 			break;
 		}
