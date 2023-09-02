@@ -6,37 +6,44 @@ AudioGaterApp::AudioGaterApp() : state(Stopped)
 	addAndMakeVisible(&openBtn);
 	openBtn.setButtonText("Open...");
 	openBtn.onClick = [this]()
-		{ openBtnClicked(); };
+	{ openBtnClicked(); };
 	openBtn.setColour(juce::TextButton::buttonColourId, juce::Colours::blueviolet);
 
 	addAndMakeVisible(&playBtn);
 	playBtn.setButtonText("Play");
 	playBtn.onClick = [this]()
-		{ playBtnClicked(); };
+	{ playBtnClicked(); };
 	playBtn.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
 	playBtn.setEnabled(false);
 
 	addAndMakeVisible(&stopBtn);
 	stopBtn.setButtonText("Stop");
 	stopBtn.onClick = [this]()
-		{ stopBtnClicked(); };
+	{ stopBtnClicked(); };
 	stopBtn.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
 	stopBtn.setEnabled(false);
 
 	addAndMakeVisible(&muteBtn);
 	muteBtn.setButtonText("Mute");
 	muteBtn.onClick = [this]()
-		{ muteBtnClicked(); };
+	{ muteBtnClicked(); };
 	muteBtn.setColour(juce::TextButton::buttonColourId, juce::Colours::dimgrey);
 	muteBtn.setEnabled(true);
 
 	addAndMakeVisible(&unmuteBtn);
 	unmuteBtn.setAlpha(0.0f);
 	unmuteBtn.onClick = [this]()
-		{unmuteBtnClicked(); };
+	{unmuteBtnClicked(); };
 	unmuteBtn.setEnabled(true);
 	unmuteBtn.setVisible(false);
 	unmuteBtn.setAlwaysOnTop(true);
+
+	addAndMakeVisible(&pauseBtn);
+	pauseBtn.setButtonText("Pause");
+	pauseBtn.onClick = [this]()
+	{pauseBtnClicked(); };
+	pauseBtn.setColour(juce::TextButton::buttonColourId, juce::Colours::slategrey);
+	pauseBtn.setEnabled(false);
 
 	addAndMakeVisible(&muteText);
 	muteText.setFont(juce::Font(190.0f, juce::Font::bold));
@@ -108,14 +115,16 @@ void AudioGaterApp::getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer
 		}
 	}
 
-	if (sampleCounter == 0 && !audioIsMuted)
+	if (state != Paused)
 	{
-		transportSource.getNextAudioBlock(bufferToFill);
-	}
-	else
-
-	{
-		transportSource.setPosition(transportSource.getCurrentPosition() + (bufferToFill.numSamples / device->getCurrentSampleRate()));
+		if (sampleCounter == 0 && !audioIsMuted)
+		{
+			transportSource.getNextAudioBlock(bufferToFill);
+		}
+		else
+		{
+			transportSource.setPosition(transportSource.getCurrentPosition() + (bufferToFill.numSamples / device->getCurrentSampleRate()));
+		}
 	}
 }
 
@@ -157,8 +166,9 @@ void AudioGaterApp::resized()
 	grid.rowGap.pixels = vSpacing;
 
 	grid.items = {
-		juce::GridItem(openBtn).withArea(3, 2),
-		juce::GridItem(playBtn).withArea(4, 2),
+		juce::GridItem(openBtn).withArea(2, 2),
+		juce::GridItem(playBtn).withArea(3, 2),
+		juce::GridItem(pauseBtn).withArea(4, 2),
 		juce::GridItem(stopBtn).withArea(5, 2),
 		juce::GridItem(muteBtn).withArea(6, 2)
 	};
@@ -185,7 +195,7 @@ void AudioGaterApp::changeListenerCallback(juce::ChangeBroadcaster* source)
 	if (source == &transportSource)
 	{
 		if (transportSource.isPlaying())
-			changeState(Playing);
+			changeState(Started);
 		else
 			changeState(Stopped);
 	}
@@ -232,7 +242,7 @@ void AudioGaterApp::openBtnClicked()
 				{
 					auto newSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
 					transportSource.setSource(newSource.get(), 0, nullptr, reader->sampleRate);
-					playBtn.setEnabled(true);
+					changeState(Stopped);
 					readerSource.reset(newSource.release());
 				}
 			} });
@@ -256,6 +266,11 @@ void AudioGaterApp::muteBtnClicked()
 	startTimer(500);
 }
 
+void AudioGaterApp::pauseBtnClicked()
+{
+	changeState(Paused);
+}
+
 void AudioGaterApp::unmuteBtnClicked()
 {
 	audioIsMuted = false;
@@ -266,30 +281,34 @@ void AudioGaterApp::unmuteBtnClicked()
 
 void AudioGaterApp::changeState(TransportState newState)
 {
-	if (state != newState)
+	state = newState;
+
+	switch (state)
 	{
-		state = newState;
+	case Stopped:
+		stopBtn.setEnabled(false);
+		pauseBtn.setEnabled(false);
+		playBtn.setEnabled(true);
+		transportSource.setPosition(0.0);
+		break;
 
-		switch (state)
-		{
-		case Stopped:
-			stopBtn.setEnabled(false);
-			playBtn.setEnabled(true);
-			transportSource.setPosition(0.0);
-			break;
+	case Stopping:
+		transportSource.stop();
+		break;
 
-		case Starting:
-			playBtn.setEnabled(false);
-			transportSource.start();
-			break;
+	case Started:
+		stopBtn.setEnabled(true);
+		break;
 
-		case Playing:
-			stopBtn.setEnabled(true);
-			break;
+	case Starting:
+		playBtn.setEnabled(false);
+		pauseBtn.setEnabled(true);
+		transportSource.start();
+		break;
 
-		case Stopping:
-			transportSource.stop();
-			break;
-		}
+	case Paused:
+		playBtn.setEnabled(true);
+		pauseBtn.setEnabled(false);
+		break;
 	}
 }

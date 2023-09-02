@@ -23,10 +23,11 @@ private:
 	//==============================================================================
 	enum TransportState
 	{
-		Stopped,
 		Starting,
-		Playing,
-		Stopping
+		Started,
+		Stopping,
+		Stopped,
+		Paused
 	};
 
 	void timerCallback() override;
@@ -42,6 +43,7 @@ private:
 
 	juce::TextButton openBtn;
 	juce::TextButton playBtn;
+	juce::TextButton pauseBtn;
 	juce::TextButton stopBtn;
 	juce::TextButton muteBtn;
 	juce::TextButton unmuteBtn;
@@ -58,6 +60,7 @@ private:
 	void playBtnClicked();
 	void stopBtnClicked();
 	void muteBtnClicked();
+	void pauseBtnClicked();
 	void unmuteBtnClicked();
 	void changeState(TransportState newState);
 
