@@ -4,6 +4,9 @@ This project serves as a learning ground for C++, Digital Signal Processing (DSP
 
 The project is an audio application designed to playback selected audio tracks. When an input signal is detected on the device playing the audio track, the output currently playing will mute, facilitating input signal monitoring. In short, it's an automatic talk-back application.
 
+![My Image](img/AudioGaterPreview.png)
+_Image reflects current state_
+
 ## Table of Contents
 
 - [Features](#features)
@@ -14,13 +17,13 @@ The project is an audio application designed to playback selected audio tracks. 
 
 - **Automatic Talk-Back Functionality:** Mutes the playback of the selected audio track upon detecting an input signal. (The gating implementation is very basic and will be redone with ballistic filters)
 
-- **Audio Track Playback with Transport:** Load, play, pause, resume and stop audio tracks (Right now, only load, play and stop are implemented)
+- **Audio Track Playback with Transport:** Load, play, pause, resume and stop audio tracks.
 
 - **Transport Bar:** Navigate through audio tracks with a responsive transport bar. (To Be Added)
 
 - **Input Signal Detection:** The application accurately detects input signals from connected devices such as microphones.
 
-- **Mute and Unmute Controls:** Users can toggle output muting with a button. (To Be Added)
+- **Mute and Unmute Controls:** Users can toggle output muting with a button.
 
 - **Audio Format Support:** Currently supports MP3 and WAV. (More formats will be added later)
 
