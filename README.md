@@ -19,7 +19,9 @@ _Image reflects current state_
 
 - **Audio Track Playback with Transport:** Load, play, pause, resume and stop audio tracks.
 
-- **Transport Bar:** Navigate through audio tracks with a responsive transport bar. (To Be Added)
+- **Transport Bar:** Navigate through audio tracks with a responsive transport bar.
+
+- **Track Details:** View the currently playing audio file details and informations. (To Be Added)
 
 - **Input Signal Detection:** The application accurately detects input signals from connected devices such as microphones.
 
