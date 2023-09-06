@@ -1,7 +1,8 @@
 #include "AudioGaterApp.h"
 
 //==============================================================================
-AudioGaterApp::AudioGaterApp() : state(Stopped)
+AudioGaterApp::AudioGaterApp() :
+	state(Stopped), transportBar(formatManager, transportSource)
 {
 	addAndMakeVisible(&openBtn);
 	openBtn.setButtonText("Open...");
@@ -44,6 +45,8 @@ AudioGaterApp::AudioGaterApp() : state(Stopped)
 	{pauseBtnClicked(); };
 	pauseBtn.setColour(juce::TextButton::buttonColourId, juce::Colours::slategrey);
 	pauseBtn.setEnabled(false);
+
+	addAndMakeVisible(&transportBar);
 
 	addAndMakeVisible(&muteText);
 	muteText.setFont(juce::Font(190.0f, juce::Font::bold));
@@ -123,7 +126,8 @@ void AudioGaterApp::getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer
 		}
 		else
 		{
-			transportSource.setPosition(transportSource.getCurrentPosition() + (bufferToFill.numSamples / device->getCurrentSampleRate()));
+			if (state == Started)
+				transportSource.setPosition(transportSource.getCurrentPosition() + (bufferToFill.numSamples / device->getCurrentSampleRate()));
 		}
 	}
 }
@@ -141,39 +145,16 @@ void AudioGaterApp::paint(juce::Graphics& g)
 
 void AudioGaterApp::resized()
 {
-	int vSpacing = getHeight() * 0.04;
-	int hSpacing = getWidth() * 0.04;
+	int buttonWidth = (int)(getWidth() / 8);
+	int buttonHeight = 50;
+	int spacing = 10;
 
-	juce::Grid grid;
-
-	using Track = juce::Grid::TrackInfo;
-	using Fr = juce::Grid::Fr;
-
-	grid.templateRows = {
-		Track(Fr(1)),
-		Track(Fr(1)),
-		Track(Fr(1)),
-		Track(Fr(1)),
-		Track(Fr(1)),
-		Track(Fr(1)),
-		Track(Fr(1)) };
-	grid.templateColumns = {
-		Track(Fr(1)),
-		Track(Fr(1)),
-		Track(Fr(1)) };
-
-	grid.columnGap.pixels = hSpacing;
-	grid.rowGap.pixels = vSpacing;
-
-	grid.items = {
-		juce::GridItem(openBtn).withArea(2, 2),
-		juce::GridItem(playBtn).withArea(3, 2),
-		juce::GridItem(pauseBtn).withArea(4, 2),
-		juce::GridItem(stopBtn).withArea(5, 2),
-		juce::GridItem(muteBtn).withArea(6, 2)
-	};
-
-	grid.performLayout(getLocalBounds().reduced(vSpacing));
+	openBtn.setBounds((int)(getWidth() / 2) - (spacing + buttonWidth), (int)(getHeight() - 440 + (spacing + buttonHeight) * 0), buttonWidth, buttonHeight);
+	playBtn.setBounds((int)(getWidth() / 2) - (spacing + buttonWidth), (int)(getHeight() - 440 + (spacing + buttonHeight) * 1), buttonWidth, buttonHeight);
+	pauseBtn.setBounds((int)(getWidth() / 2) - (spacing + buttonWidth), (int)(getHeight() - 440 + (spacing + buttonHeight) * 2), buttonWidth, buttonHeight);
+	stopBtn.setBounds((int)(getWidth() / 2) + spacing, (int)(getHeight() - 440 + (spacing + buttonHeight) * 0), buttonWidth, buttonHeight);
+	muteBtn.setBounds((int)(getWidth() / 2) + spacing, (int)(getHeight() - 440 + (spacing + buttonHeight) * 1), buttonWidth, buttonHeight);
+	transportBar.setBounds((int)(getWidth() / 8), (int)(getHeight() - 240), (int)(getWidth() - getWidth() / 8 * 2), 200);
 
 	muteText.setBounds(0, 0, getWidth(), getHeight());
 	unmuteBtn.setBounds(0, 0, getWidth(), getHeight());
@@ -199,16 +180,6 @@ void AudioGaterApp::changeListenerCallback(juce::ChangeBroadcaster* source)
 		else
 			changeState(Stopped);
 	}
-}
-
-double AudioGaterApp::getSongLengthInSeconds()
-{
-	return readerSource != nullptr ? readerSource->getAudioFormatReader()->lengthInSamples / readerSource->getAudioFormatReader()->sampleRate : 0.0;
-}
-
-double AudioGaterApp::getCurrentPositionInSeconds()
-{
-	return transportSource.isPlaying() ? transportSource.getCurrentPosition() : 0.0;
 }
 
 juce::String AudioGaterApp::formatTime(int seconds)
@@ -242,6 +213,7 @@ void AudioGaterApp::openBtnClicked()
 				{
 					auto newSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
 					transportSource.setSource(newSource.get(), 0, nullptr, reader->sampleRate);
+					transportBar.setSource(file);
 					changeState(Stopped);
 					readerSource.reset(newSource.release());
 				}

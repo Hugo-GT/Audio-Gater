@@ -4,6 +4,12 @@
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1">
   <MAINGROUP id="aTVsf1" name="AudioGater">
     <GROUP id="{5B5606FC-137C-64EA-A18C-282E5AB63F56}" name="Source">
+      <GROUP id="{7A8984B2-B435-A6A5-619D-D8204846886F}" name="Components">
+        <FILE id="lCtnY5" name="TransportSlider.cpp" compile="1" resource="0"
+              file="Source/Components/TransportSlider.cpp"/>
+        <FILE id="Baj8Hy" name="TransportBar.cpp" compile="1" resource="0"
+              file="Source/Components/TransportBar.cpp"/>
+      </GROUP>
       <FILE id="N7Vofb" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
       <FILE id="m25BrO" name="AudioGaterApp.h" compile="0" resource="0" file="Source/AudioGaterApp.h"/>
       <FILE id="GvcG5v" name="AudioGaterApp.cpp" compile="1" resource="0"

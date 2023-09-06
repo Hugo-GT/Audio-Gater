@@ -2,6 +2,40 @@
 
 #include <JuceHeader.h>
 
+class TransportSlider : public juce::Component, private juce::Timer
+{
+public:
+	TransportSlider(juce::AudioTransportSource& audioSource);
+	~TransportSlider();
+	void paint(juce::Graphics& g) override;
+private:
+	void timerCallback() override;
+
+	juce::AudioTransportSource& audioSource;
+
+	void mouseDown(const juce::MouseEvent& event) override;
+	void mouseDrag(const juce::MouseEvent& event) override;
+	void setNewPlaybackPosition();
+};
+
+class TransportBar : public juce::Component, private juce::ChangeListener
+{
+public:
+	TransportBar(juce::AudioFormatManager& formatManager, juce::AudioTransportSource& audioSource);
+	~TransportBar();
+	void paint(juce::Graphics& g) override;
+	void setSource(juce::File& file);
+private:
+	void changeListenerCallback(juce::ChangeBroadcaster* source) override;
+	void TransportBar::paintIfNoFileLoaded(juce::Graphics& g);
+	void TransportBar::paintIfFileLoaded(juce::Graphics& g);
+
+	juce::AudioThumbnailCache audioThumbnailCache;
+	juce::AudioThumbnail audioThumbnail;
+	TransportSlider transportSlider;
+};
+
+
 //==============================================================================
 class AudioGaterApp : public juce::AudioAppComponent, public juce::ChangeListener, private juce::Timer
 {
@@ -50,6 +84,7 @@ private:
 
 	juce::Label muteText;
 
+	TransportBar transportBar;
 	juce::AudioFormatManager formatManager;
 	std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
 	juce::AudioTransportSource transportSource;
